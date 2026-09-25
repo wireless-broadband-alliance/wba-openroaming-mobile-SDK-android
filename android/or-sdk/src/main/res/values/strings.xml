@@ -1,0 +1,15 @@
+<resources>
+
+    <!-- OpenRoaming -->
+    <string name="open_roaming_not_supported">Passpoint is not supported in this device!</string>
+    <string name="open_roaming_api">https://openroamingconnect.org/api/v3/%1$s</string>
+
+    <!-- 2FA -->
+    <string name="open_roaming_2fa_blank_credentials">You need to set your 2FA code to continue!</string>
+
+    <!-- Common -->
+    <string name="common_error">An expected error occurred…</string>
+    <string name="common_error_turnstile_key">The Turnstile key is invalid… Please run the config endpoint to get a new Key!</string>
+    <string name="common_error_jwt_token">The JWT Token does not exist, or it is expired!</string>
+
+</resources>
