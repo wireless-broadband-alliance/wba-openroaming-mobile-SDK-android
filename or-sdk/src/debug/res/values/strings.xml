@@ -1,0 +1,6 @@
+<resources>
+
+    <!-- OpenRoaming -->
+    <string name="open_roaming_api">https://openroamingconnect.org/api/v3/%1$s</string>
+
+</resources>
