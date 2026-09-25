@@ -28,15 +28,33 @@ The official WBA Android SDK for integrating **OpenRoaming (Wi-Fi Passpoint / Ho
 
 ## 🛠️ Installation
 
-Add the SDK dependency to your module-level `build.gradle.kts`:
+Since the SDK is distributed directly as a source repository, you need to download/clone it and import it as a local module in your Android project.
+
+### Step 1: Add the repository to your project
+Clone or download this repository into your project's root folder (or add it as a Git submodule):
+
+```bash
+git submodule add [https://git.tetrapi.pt/tcs/wba/wba-openroaming-android-sdk.git](https://git.tetrapi.pt/tcs/wba/wba-openroaming-android-sdk.git) or-sdk
+```
+
+### Step 2: Include the module in `settings.gradle.kts`
+Include the SDK module in your project's `settings.gradle.kts`:
+
+```kotlin
+include(":or-sdk")
+```
+
+### Step 3: Add the dependency in `app/build.gradle.kts`
+Add the local project dependency to your application module's `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("com.wba.sdk:openroaming-sdk:1.0.0")
+    implementation(project(":or-sdk"))
 }
 ```
 
-Ensure the base API endpoint format string and fallback strings are defined in your project's `res/values/strings.xml`:
+### Step 4: Configure required resources
+Ensure the base API endpoint format string and fallback strings are defined in your application's `res/values/strings.xml`:
 
 ```xml
 <resources>
