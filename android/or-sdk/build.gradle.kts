@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "com.tetrapi.sdk"
+    namespace = "com.wba.sdk"
 
     compileSdk {
 
@@ -41,8 +41,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.11.0")
     implementation("androidx.startup:startup-runtime:1.2.0")
 
-    implementation("io.ktor:ktor-client-core:3.6.0")
-    implementation("io.ktor:ktor-client-okhttp:3.6.0")
+    implementation("io.ktor:ktor-client-core:3.5.2")
+    implementation("io.ktor:ktor-client-okhttp:3.5.2")
 }
 
 configurations.all {

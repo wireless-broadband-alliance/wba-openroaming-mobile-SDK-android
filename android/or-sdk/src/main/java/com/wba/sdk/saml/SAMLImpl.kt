@@ -1,4 +1,4 @@
-package com.tetrapi.sdk.saml
+package com.wba.sdk.saml
 
 import android.annotation.SuppressLint
 import android.util.Log
@@ -11,7 +11,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
-import com.tetrapi.sdk.utils.Preferences
+import com.wba.sdk.utils.Preferences
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -21,16 +21,37 @@ import kotlin.coroutines.resumeWithException
 //  OpenRoaming SDK
 //
 //  Created by Fábio Carvalho
-//  Copyright © 2026 Tetrapi. All rights reserved.
+//  Copyright © 2026 WBA. All rights reserved.
 //
 
+/**
+ * Default implementation of [SAML].
+ *
+ * Manages SAML Single Sign-On (SSO) authentication by dynamically injecting a [WebView]
+ * into the current Activity's root layout, evaluating JavaScript to capture SAML assertions,
+ * and passing the captured token back to Kotlin coroutines.
+ *
+ * @property preferences Local storage utility used to retrieve the SAML entry point URL.
+ */
 class SAMLImpl(
     private val preferences: Preferences
 ) : SAML {
 
+    /**
+     * Retrieves the SAML start URL stored in local preferences under key `SAML_START`.
+     */
     override val url: String?
         get() = preferences.getString("SAML_START")
 
+    /**
+     * Dynamically attaches a [WebView] overlay to the given [activity], loads the SAML entry point,
+     * and listens for the posted `SAMLResponse` via JavaScript injection.
+     *
+     * Automatically detaches and cleans up the [WebView] once authentication completes or fails.
+     *
+     * @param activity The host [AppCompatActivity] to display the authentication web interface.
+     * @return A [Result] containing the captured SAML response string.
+     */
     override suspend fun start(activity: AppCompatActivity): Result<String> = runCatching {
 
         suspendCancellableCoroutine {
@@ -66,7 +87,7 @@ class SAMLImpl(
 
                 @JavascriptInterface
                 override fun onSAMLResponse(response: String) {
-                    it.resume(response)
+                    it.resume(value = response)
                     cleanup(activity, webView)
                 }
             }
@@ -84,6 +105,13 @@ class SAMLImpl(
         }
     }
 
+    /**
+     * Safely removes the [webView] from the Activity root container and releases its resources
+     * on the main UI thread.
+     *
+     * @param activity The host [AppCompatActivity] containing the view.
+     * @param webView The [WebView] instance to destroy.
+     */
     private fun cleanup(activity: AppCompatActivity, webView: WebView) = activity.runOnUiThread {
         val container = activity.findViewById<ViewGroup>(android.R.id.content)
         container.removeView(webView)
@@ -92,6 +120,10 @@ class SAMLImpl(
         webView.destroy()
     }
 
+    /**
+     * JavaScript snippet injected into loaded pages to intercept `SAMLResponse` hidden form fields
+     * upon direct detection or form submission.
+     */
     private val script = """
         (function() {
             function capture() {
@@ -110,6 +142,9 @@ class SAMLImpl(
         })();
     """.trimIndent()
 
+    /**
+     * JavaScript bridge class exposed to the web view to receive callbacks from injected scripts.
+     */
     open class JSInterface {
 
         @JavascriptInterface

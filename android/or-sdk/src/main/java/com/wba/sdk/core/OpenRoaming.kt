@@ -1,4 +1,4 @@
-package com.tetrapi.sdk.core
+package com.wba.sdk.core
 
 import android.content.Context
 import android.content.pm.PackageManager
@@ -10,7 +10,7 @@ import android.net.wifi.hotspot2.pps.HomeSp
 import android.os.Build
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
-import com.tetrapi.sdk.R
+import com.wba.sdk.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.json.JSONObject
@@ -25,11 +25,23 @@ import javax.crypto.Cipher
 //  OpenRoaming SDK
 //
 //  Created by Fábio Carvalho
-//  Copyright © 2026 Tetrapi. All rights reserved.
+//  Copyright © 2026 WBA. All rights reserved.
 //
 
+/**
+ * Core engine responsible for Passpoint / OpenRoaming Wi-Fi profile provisioning and network suggestion management.
+ *
+ * Handles Wi-Fi Passpoint capability checks, ephemeral RSA key pair generation, encrypted credential
+ * exchange with backend services, and installation/removal of [PasspointConfiguration] network suggestions.
+ */
 class OpenRoaming {
 
+    /**
+     * Checks whether the current Android device supports Wi-Fi Passpoint (Hotspot 2.0).
+     *
+     * @param context Application context.
+     * @return `true` if Passpoint is enabled and supported by hardware/OS, `false` otherwise.
+     */
     private fun isPasspointSupported(context: Context): Boolean {
         val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
         return isPasspointSupported(context, wifiManager)
@@ -40,6 +52,11 @@ class OpenRoaming {
         else -> context.packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI_PASSPOINT)
     }
 
+    /**
+     * Generates an ephemeral 1024-bit RSA KeyPair used to decrypt RADIUS credentials returned by the server.
+     *
+     * @return Freshly generated [KeyPair].
+     */
     private fun generateRSAKeys(): KeyPair {
         val generator = KeyPairGenerator.getInstance("RSA")
         generator.initialize(1024)
@@ -47,6 +64,13 @@ class OpenRoaming {
         return generator.generateKeyPair()
     }
 
+    /**
+     * Decrypts an RSA/ECB/PKCS1Padding encrypted RADIUS password using the generated private key.
+     *
+     * @param key RSA [PrivateKey] matching the public key sent to the backend.
+     * @param password Base64-encoded encrypted password string.
+     * @return Decrypted plain-text password string.
+     */
     private fun decryptPassword(key: PrivateKey, password: String): String {
         val encryptedBytes = Base64.getDecoder().decode(password)
 
@@ -57,6 +81,16 @@ class OpenRoaming {
         return String(decryptedBytes, Charsets.UTF_8).trim()
     }
 
+    /**
+     * Initiates the OpenRoaming Passpoint profile connection and installation process asynchronously.
+     *
+     * Verifies Passpoint hardware support, generates public key exchange parameters, requests profile
+     * metadata from the server, and installs configured Wi-Fi Network Suggestions on the system.
+     *
+     * Invokes [onConnectionSuccess] or [onConnectionError] callbacks upon completion.
+     *
+     * @param activity The host [FragmentActivity] providing lifecycle scope and context.
+     */
     fun connect(activity: FragmentActivity) = activity.lifecycleScope.launch(Dispatchers.IO) {
         // Checks if device supports OpenRoaming
         val isSupported = isPasspointSupported(activity)
@@ -86,13 +120,20 @@ class OpenRoaming {
         }
 
         request.onFailure {
-
             activity.runOnUiThread {
                 onConnectionError(it.message)
             }
         }
     }
 
+    /**
+     * Constructs the [PasspointConfiguration] object from JSON profile metadata,
+     * decrypts user credentials, and registers network suggestions with Android [WifiManager].
+     *
+     * @param context Application context.
+     * @param keyPair Ephemeral RSA key pair used to decrypt credentials.
+     * @param data JSON object containing HomeSp, Realm, and RADIUS user credentials.
+     */
     private fun connect(context: Context, keyPair: KeyPair, data: JSONObject) {
         // Set up HomeSp (Home Service Provider) information
         val homeSp = HomeSp()
@@ -135,19 +176,39 @@ class OpenRoaming {
         onConnectionSuccess()
     }
 
+    /**
+     * Callback invoked when the Passpoint network profile is successfully configured and installed.
+     */
     var onConnectionSuccess: () -> Unit = {
         /** Connection succeeded */
     }
 
+    /**
+     * Callback invoked when Passpoint provisioning fails or is unsupported.
+     *
+     * Provides an optional error message describing the failure.
+     */
     var onConnectionError: (message: String?) -> Unit = {
         /** Connection failed */
     }
 
+    /**
+     * Retrieves a list of active Passpoint network configurations installed by this SDK.
+     *
+     * @param context Application context.
+     * @return List of active [PasspointConfiguration] instances registered as network suggestions.
+     */
     fun networks(context: Context): ArrayList<PasspointConfiguration> {
         val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
         return wifiManager.networkSuggestions.mapNotNull { it.passpointConfig }.toCollection(ArrayList())
     }
 
+    /**
+     * Removes a previously registered Passpoint network suggestion from the system.
+     *
+     * @param context Application context.
+     * @param network The [PasspointConfiguration] to uninstall.
+     */
     fun remove(context: Context, network: PasspointConfiguration) {
         val suggestions = WifiNetworkSuggestion.Builder()
             .setPasspointConfig(network)
