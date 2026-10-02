@@ -34,7 +34,7 @@ Since the SDK is distributed directly as a source repository, you need to downlo
 Clone or download this repository into your project's root folder (or add it as a Git submodule):
 
 ```bash
-git submodule add [https://git.tetrapi.pt/tcs/wba/wba-openroaming-android-sdk.git](https://git.tetrapi.pt/tcs/wba/wba-openroaming-android-sdk.git) or-sdk
+git submodule add https://git.tetrapi.pt/tcs/wba/wba-openroaming-android-sdk.git or-sdk
 ```
 
 ### Step 2: Include the module in `settings.gradle.kts`
@@ -58,7 +58,7 @@ Ensure the base API endpoint format string and fallback strings are defined in y
 
 ```xml
 <resources>
-    <string name="open_roaming_api">[https://api.openroaming.example.com/v1/%s](https://api.openroaming.example.com/v1/%s)</string>
+    <string name="open_roaming_api">https://api.openroaming.example.com/v1/%1$s</string>
     <string name="open_roaming_not_supported">Your device does not support Wi-Fi Passpoint (OpenRoaming).</string>
 </resources>
 ```
