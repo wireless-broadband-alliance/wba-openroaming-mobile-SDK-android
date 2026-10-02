@@ -93,7 +93,7 @@ class ConfigImpl(
         }
 
         if (data.has("saml")) data.getJSONObject("saml").apply {
-            preferences.saveString("SAML_START", "https://wifi.tetrapi.pt/saml/login") //TODO need to change this
+            preferences.saveString("SAML_START", "https://wifi.wballiance.pt/saml/login") //TODO need to change this
         }
 
         val expirationTime = System.currentTimeMillis() + (expirationDays * 24L * 60 * 60 * 1000)
