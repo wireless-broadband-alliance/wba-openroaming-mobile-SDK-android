@@ -85,10 +85,16 @@ class TurnstileImpl(
             webView.webViewClient = object : WebViewClient() {
 
                 override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
-                    val exception = Exception(error?.description?.toString())
-                    continuation.resumeWithException(exception)
 
-                    cleanup(activity, webView)
+                    if (request?.isForMainFrame == true) {
+
+                        if (continuation.isActive) {
+                            val exception = Exception(error?.description?.toString())
+                            continuation.resumeWithException(exception)
+                        }
+
+                        cleanup(activity, webView)
+                    }
                 }
             }
 
