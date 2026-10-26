@@ -34,7 +34,7 @@ Since the SDK is distributed directly as a source repository, you need to downlo
 Clone or download this repository into your project's root folder (or add it as a Git submodule):
 
 ```bash
-git clone https://github.com/wireless-broadband-alliance/wba-openroaming-mobile-SDK-android or-sdk
+git submodule add https://git.tetrapi.pt/tcs/wba/wba-openroaming-android-sdk.git or-sdk
 ```
 
 ### Step 2: Include the module in `settings.gradle.kts`
