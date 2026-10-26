@@ -8,6 +8,7 @@ import android.net.wifi.hotspot2.PasspointConfiguration
 import android.net.wifi.hotspot2.pps.Credential
 import android.net.wifi.hotspot2.pps.HomeSp
 import android.os.Build
+import android.util.Base64
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import com.wba.sdk.R
@@ -17,7 +18,6 @@ import org.json.JSONObject
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.PrivateKey
-import java.util.Base64
 import javax.crypto.Cipher
 
 //
@@ -59,7 +59,7 @@ class OpenRoaming {
      */
     private fun generateRSAKeys(): KeyPair {
         val generator = KeyPairGenerator.getInstance("RSA")
-        generator.initialize(1024)
+        generator.initialize(2048)
 
         return generator.generateKeyPair()
     }
@@ -72,9 +72,9 @@ class OpenRoaming {
      * @return Decrypted plain-text password string.
      */
     private fun decryptPassword(key: PrivateKey, password: String): String {
-        val encryptedBytes = Base64.getDecoder().decode(password)
+        val encryptedBytes = Base64.decode(password.trim(), Base64.DEFAULT)
 
-        val cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
+        val cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-1AndMGF1Padding")
         cipher.init(Cipher.DECRYPT_MODE, key)
 
         val decryptedBytes = cipher.doFinal(encryptedBytes)
@@ -92,14 +92,14 @@ class OpenRoaming {
      * @param activity The host [FragmentActivity] providing lifecycle scope and context.
      */
     fun connect(activity: FragmentActivity) = activity.lifecycleScope.launch(Dispatchers.IO) {
-        // Checks if device supports OpenRoaming
         val isSupported = isPasspointSupported(activity)
         if (!isSupported) return@launch onConnectionError(activity.getString(R.string.open_roaming_not_supported))
 
-        // Generate RSA Keys to get Android profile
         val keyPair = generateRSAKeys()
-        val publicKeyBase64 = Base64.getEncoder().encodeToString(keyPair.public.encoded)
-        val publicPemFormatted = "-----BEGIN PUBLIC KEY-----\n$publicKeyBase64\n-----END PUBLIC KEY-----"
+        val publicKeyBase64 = Base64.encodeToString(keyPair.public.encoded, Base64.NO_WRAP)
+
+        val formattedBase64 = publicKeyBase64.chunked(64).joinToString("\n")
+        val publicPemFormatted = "-----BEGIN PUBLIC KEY-----\n$formattedBase64\n-----END PUBLIC KEY-----"
 
         val token = SDK.getUser().jwtToken
         val params = JSONObject().apply {
@@ -150,7 +150,7 @@ class OpenRoaming {
         userCredential.username = data.getString("radiusUsername")
 
         val password = decryptPassword(keyPair.private, data.getString("radiusPassword"))
-        val passwordB64 = Base64.getEncoder().encodeToString(password.toByteArray(Charsets.UTF_8))
+        val passwordB64 = Base64.encodeToString(password.toByteArray(Charsets.UTF_8), Base64.DEFAULT)
         userCredential.password = passwordB64
 
         userCredential.eapType = data.getInt("eapType")

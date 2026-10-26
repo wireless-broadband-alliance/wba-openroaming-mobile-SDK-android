@@ -1,3 +1,12 @@
+# Release V1.0.1
+
+### Cryptography & Security Enhancements
+
+- **RSA Key Size Upgrade**: Increased RSA key pair generation length to 2048 bits (`KeyPairGenerator.initialize(2048)`) to enforce stronger security standards for Passpoint profile provisioning.
+- **Cipher Transformation Fix**: Resolved key encryption issues by updating the cipher transformation scheme to `RSA/ECB/OAEPWithSHA-1AndMGF1Padding` for standard-compliant encrypted credential exchange.
+
+---
+
 # Release V1.0.0
 
 ### Breaking Changes & Architectural Refactoring
